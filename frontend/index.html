@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Threat Detection Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <header class="bg-blue-800 text-white p-4 shadow">
+    <h1 class="text-2xl font-semibold">Threat Detection Dashboard</h1>
+  </header>
+  <main class="flex-grow p-6">
+    <section>
+      <h2 class="text-xl font-semibold mb-4">Real-time Threat Events</h2>
+      <div id="events" class="space-y-4 max-h-96 overflow-y-auto bg-white p-4 rounded shadow"></div>
+    </section>
+  </main>
+  <footer class="bg-blue-800 text-white p-4 text-center">
+    &copy; 2024 Threat Detection Dashboard
+  </footer>
+
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+  <script>
+    const socket = io('http://localhost:3000');
+
+    const eventsContainer = document.getElementById('events');
+
+    function addEvent(event) {
+      const div = document.createElement('div');
+      div.className = 'p-3 border rounded shadow-sm ' + 
+        (event.severity === 'high' ? 'bg-red-100 border-red-400' :
+         event.severity === 'medium' ? 'bg-yellow-100 border-yellow-400' :
+         'bg-green-100 border-green-400');
+      div.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span class="font-semibold capitalize">${event.type.replace('_', ' ')}</span>
+          <span class="text-sm font-medium">${event.severity.toUpperCase()}</span>
+        </div>
+        <p class="mt-1 text-gray-700">${event.description}</p>
+      `;
+      eventsContainer.prepend(div);
+      // Keep max 20 events
+      if (eventsContainer.children.length > 20) {
+        eventsContainer.removeChild(eventsContainer.lastChild);
+      }
+    }
+
+    socket.on('connect', () => {
+      console.log('Connected to backend');
+    });
+
+    socket.on('threat_event', (event) => {
+      addEvent(event);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from backend');
+    });
+  </script>
+</body>
+</html>
